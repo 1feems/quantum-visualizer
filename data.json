@@ -5,14 +5,14 @@
     "agent": "Iskander",
     "agent_btc": "bc1qxj5jtv8jwm7zv2nczn2xfq9agjgj0sqpsxn43h",
     "agent_bns": "iskander-ai.btc",
-    "version": "2.9",
+    "version": "3.0",
     "bounty": "AIBTC Bounty #38 - Bitcoin Quantum Upgrade",
-    "total_assessed": 63,
+    "total_assessed": 66,
     "ranked": 50,
-    "notable_additions": 13,
+    "notable_additions": 16,
     "score_distribution": {
       "5_urgent": 7,
-      "4_proactive": 12,
+      "4_proactive": 15,
       "3_cautious": 9,
       "2_dismissive": 8,
       "1_no_known_view": 27
@@ -192,9 +192,30 @@
         "change": "new entry — score 4 (Proactive), pq_work_volume 2; no-fork WOTS+ Bitcoin wallet/SDK launched on Arch Network",
         "pr": "#33",
         "contributor": "@Nuval999"
+      },
+      {
+        "date": "2026-05-05",
+        "developer": "Spyros Tserkis et al.",
+        "change": "new entry — score 4 (Proactive), pq_work_volume 1; constant-depth Toffoli gates via teleportation (arXiv 2604.25861)",
+        "pr": "#31",
+        "contributor": "@1feems"
+      },
+      {
+        "date": "2026-05-05",
+        "developer": "Debora Ramacciotti et al.",
+        "change": "new entry — score 4 (Proactive), pq_work_volume 1; Grover-Rudolph gate optimization ~22% CNOT reduction (arXiv 2604.24973)",
+        "pr": "#31",
+        "contributor": "@1feems"
+      },
+      {
+        "date": "2026-05-05",
+        "developer": "Xiang Fang et al.",
+        "change": "new entry — score 4 (Proactive), pq_work_volume 1; LightStim DEM automation for QEC (arXiv 2604.21472)",
+        "pr": "#31",
+        "contributor": "@1feems"
       }
     ],
-    "last_updated": "2026-05-01",
+    "last_updated": "2026-05-05",
     "next_review": "weekly — Sundays (DRI synthesis)"
   },
   "developers": [
@@ -1089,6 +1110,51 @@
         "https://arxiv.org/abs/2603.28846"
       ],
       "last_verified": "2026-05-01"
+    },
+    {
+      "rank": 64,
+      "name": "Spyros Tserkis, Muhammad Umer, Eleftherios Mastorakis, Dimitris G. Angelakis",
+      "affiliation": "Academic (Quantum Physics Research)",
+      "role": "Quantum computing researchers",
+      "quantum_urgency_score": 4,
+      "pq_work_volume": 1,
+      "notable": true,
+      "summary": "Authors of arXiv 2604.25861 introducing constant-depth multi-controlled Toffoli gates via teleportation. Eliminates depth scaling in quantum arithmetic circuits, reducing execution time for Shor-based ECDLP attacks on secp256k1 while maintaining linear ancilla overhead. Directly compresses the circuit-depth budget in Babbush et al.'s <500K physical-qubit ECDLP attack model.",
+      "key_source": "https://arxiv.org/abs/2604.25861",
+      "sources": [
+        "https://arxiv.org/abs/2604.25861"
+      ],
+      "last_verified": "2026-05-05"
+    },
+    {
+      "rank": 65,
+      "name": "Debora Ramacciotti, Martin Steinbach, Bence Temesi, Andreea-Iulia Lefterovici, Antonio F. Rotundo",
+      "affiliation": "Academic (Quantum Computing Research)",
+      "role": "Quantum computing researchers",
+      "quantum_urgency_score": 4,
+      "pq_work_volume": 1,
+      "notable": true,
+      "summary": "Authors of arXiv 2604.24973 introducing gate-merging optimizations for Grover-Rudolph state preparation, achieving ~22% reduction in CNOT gate counts. Improves efficiency of quantum search subroutines used in ECDLP attack pipelines by lowering circuit depth and coherence requirements.",
+      "key_source": "https://arxiv.org/abs/2604.24973",
+      "sources": [
+        "https://arxiv.org/abs/2604.24973"
+      ],
+      "last_verified": "2026-05-05"
+    },
+    {
+      "rank": 66,
+      "name": "Xiang Fang, Ming Wang, Yue Wu, Sharanya Prabhu, Dean Tullsen, Narasinga Rao Miniskar, Frank Mueller, Travis Humble, Yufei Ding",
+      "affiliation": "Academic / National Labs (Quantum Computing Research)",
+      "role": "Quantum computing researchers",
+      "quantum_urgency_score": 4,
+      "pq_work_volume": 1,
+      "notable": true,
+      "summary": "Authors of arXiv 2604.21472 introducing LightStim, a framework that automates Detector Error Model (DEM) construction for quantum error correction protocols. Enables faster evaluation and prototyping of fault-tolerant quantum systems by removing manual annotation bottlenecks — accelerating the path to practical QEC at scale.",
+      "key_source": "https://arxiv.org/abs/2604.21472",
+      "sources": [
+        "https://arxiv.org/abs/2604.21472"
+      ],
+      "last_verified": "2026-05-05"
     }
   ]
 }
