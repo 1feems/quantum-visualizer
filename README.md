@@ -57,7 +57,7 @@ npm run validate:data
 node scripts/build-customer.mjs
 ```
 
-The stamp/append scripts are idempotent and safe to re-run. Run `npm run validate:data` before opening or merging data PRs so reviewers can catch stale counts, malformed source URLs, or missing freshness stamps early. `build-customer.mjs` requires `gh` auth.
+The stamp/append scripts are idempotent and safe to re-run, and they keep `data.json` and `public/data.json` in sync. Run `npm run validate:data` before opening or merging data PRs so reviewers can catch stale counts, malformed source URLs, file drift, or missing freshness stamps early. `build-customer.mjs` requires `gh` auth.
 
 ## Deploy
 

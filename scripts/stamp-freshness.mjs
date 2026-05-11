@@ -3,7 +3,10 @@
 // Run: node scripts/stamp-freshness.mjs [--dev "Name" --date YYYY-MM-DD]
 import fs from "fs";
 
-const FILE = new URL("../public/data.json", import.meta.url);
+const FILES = [
+  new URL("../data.json", import.meta.url),
+  new URL("../public/data.json", import.meta.url),
+];
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => {
     if (a.startsWith("--")) acc.push([a.slice(2), arr[i + 1]]);
@@ -12,7 +15,7 @@ const args = Object.fromEntries(
 );
 
 const today = new Date().toISOString().slice(0, 10);
-const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
+const data = JSON.parse(fs.readFileSync(FILES[1], "utf8"));
 const defaultDate = data.metadata.date || today;
 
 let stamped = 0;
@@ -27,5 +30,5 @@ for (const dev of data.developers) {
 }
 
 data.metadata.last_updated = today;
-fs.writeFileSync(FILE, JSON.stringify(data, null, 2) + "\n");
+for (const file of FILES) fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
 console.log(`stamped ${stamped} developer(s); metadata.last_updated=${today}`);
