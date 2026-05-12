@@ -350,13 +350,13 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
 
   const settlementResponse = {
     success: true,
-    transaction: outcome.txid,
+    transaction: settledTxid,
     network: NETWORK,
     payer: outcome.payer || "",
   };
   return new Response(JSON.stringify({
     ...slice,
-    payment: { txid: outcome.txid, sats: Number(PRICE_SATS), payer: outcome.payer || null, mode: broadcastMode },
+    payment: { txid: settledTxid, sats: Number(PRICE_SATS), payer: outcome.payer || null, mode: broadcastMode },
   }), {
     status: 200,
     headers: {
