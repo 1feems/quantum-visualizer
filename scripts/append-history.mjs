@@ -3,7 +3,10 @@
 // Run: node scripts/append-history.mjs --developer "Name" --change "1->3" --pr "#15" --contributor "@handle" [--date YYYY-MM-DD]
 import fs from "fs";
 
-const FILE = new URL("../public/data.json", import.meta.url);
+const FILES = [
+  new URL("../data.json", import.meta.url),
+  new URL("../public/data.json", import.meta.url),
+];
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => {
     if (a.startsWith("--")) acc.push([a.slice(2), arr[i + 1]]);
@@ -17,7 +20,7 @@ if (!args.developer || !args.change) {
 }
 
 const today = new Date().toISOString().slice(0, 10);
-const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
+const data = JSON.parse(fs.readFileSync(FILES[1], "utf8"));
 data.metadata.update_history = data.metadata.update_history || [];
 
 const entry = {
@@ -34,5 +37,5 @@ data.metadata.last_updated = today;
 const dev = data.developers.find((d) => d.name === args.developer);
 if (dev) dev.last_verified = entry.date;
 
-fs.writeFileSync(FILE, JSON.stringify(data, null, 2) + "\n");
+for (const file of FILES) fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
 console.log("appended:", JSON.stringify(entry));

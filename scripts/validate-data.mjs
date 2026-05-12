@@ -3,8 +3,10 @@
 // Checks metadata/developer consistency, freshness stamps, source URLs, and score distribution.
 import fs from "fs";
 
-const FILE = new URL("../public/data.json", import.meta.url);
-const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
+const ROOT_FILE = new URL("../data.json", import.meta.url);
+const PUBLIC_FILE = new URL("../public/data.json", import.meta.url);
+const rootData = JSON.parse(fs.readFileSync(ROOT_FILE, "utf8"));
+const data = JSON.parse(fs.readFileSync(PUBLIC_FILE, "utf8"));
 const errors = [];
 const warnings = [];
 
@@ -31,6 +33,10 @@ function isHttpUrl(value) {
 }
 
 assert(data && typeof data === "object", "data.json must parse to an object");
+assert(
+  JSON.stringify(rootData) === JSON.stringify(data),
+  "data.json and public/data.json must stay in sync"
+);
 assert(data.metadata && typeof data.metadata === "object", "metadata object is required");
 assert(Array.isArray(data.developers), "developers must be an array");
 
