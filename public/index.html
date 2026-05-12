@@ -460,11 +460,43 @@ const dist=data.metadata.score_distribution;
 const total=data.metadata.total_assessed;
 const qri=data.metadata.quantum_readiness_index;
 
+function levelForScore(value){
+if(value<20)return 'Asleep';
+if(value<40)return 'Sleepwalking';
+if(value<60)return 'Awakening';
+if(value<80)return 'Mobilizing';
+return 'Ready';
+}
+
+function normalizeReadiness(raw){
+if(raw&&typeof raw==='object'&&raw.composite_readiness&&raw.voiced_urgency&&raw.coverage)return raw;
+const silent=dist['1_no_known_view']||0;
+const voicedCount=Math.max(0,total-silent);
+const weighted=(dist['5_urgent']||0)*5+(dist['4_proactive']||0)*4+(dist['3_cautious']||0)*3+(dist['2_dismissive']||0)*2;
+const voicedScore=voicedCount?Math.round(weighted/(voicedCount*5)*100):0;
+const coverageScore=total?Math.round(voicedCount/total*100):0;
+let compositeScore=Math.round(voicedScore*coverageScore/100);
+if(typeof raw==='number'&&Number.isFinite(raw))compositeScore=Math.round(raw<=1?raw*100:raw);
+const currentLevel=levelForScore(compositeScore);
+return {
+composite_readiness:{
+score:compositeScore,
+current_level:currentLevel,
+formula:typeof raw==='number'
+?'Index loaded from metadata. Voiced urgency and coverage panels are derived from the current score distribution.'
+:'Voiced urgency multiplied by coverage. Derived from the current score distribution because no structured index object was present.'
+},
+voiced_urgency:{score:voicedScore,voices_count:voicedCount},
+coverage:{score:coverageScore,silent,total}
+};
+}
+
 // Readiness Index
 const indexEl=document.getElementById('index-card');
-const comp=qri.composite_readiness;
-const voiced=qri.voiced_urgency;
-const coverage=qri.coverage;
+const normalizedQri=normalizeReadiness(qri);
+const comp=normalizedQri.composite_readiness;
+const voiced=normalizedQri.voiced_urgency;
+const coverage=normalizedQri.coverage;
 const score=comp.score;
 const circumference=2*Math.PI*65;
 const offset=circumference-(score/100)*circumference;
@@ -530,10 +562,12 @@ filtersEl.innerHTML+=`<button class="pill" data-score="${s.score}">${s.score}</b
 });
 
 // State
-let activeScore='all';
-let activeAffiliation='all';
-let searchQuery='';
-let activeDevName=null;
+const urlState=new URLSearchParams(window.location.search);
+const validScores=new Set(scores.map(s=>String(s.score)));
+let activeScore=validScores.has(urlState.get('score'))?urlState.get('score'):'all';
+let activeAffiliation=urlState.get('affiliation')||'all';
+let searchQuery=urlState.get('q')||'';
+let activeDevName=urlState.get('dev')||null;
 
 // Affiliation dropdown — populate from data
 const affilSelect=document.getElementById('affil-select');
@@ -545,6 +579,31 @@ opt.value=a;
 opt.textContent=`${a} (${affilCounts[a]})`;
 affilSelect.appendChild(opt);
 });
+if(activeAffiliation!=='all'&&!affilCounts[activeAffiliation])activeAffiliation='all';
+
+function findDevByName(name){
+if(!name)return null;
+const needle=String(name).toLowerCase();
+return devs.find(d=>d.name&&d.name.toLowerCase()===needle)||null;
+}
+
+function updateUrlState(){
+const params=new URLSearchParams();
+if(activeScore!=='all')params.set('score',activeScore);
+if(activeAffiliation!=='all')params.set('affiliation',activeAffiliation);
+if(searchQuery.trim())params.set('q',searchQuery.trim());
+if(activeDevName)params.set('dev',activeDevName);
+const query=params.toString();
+const nextUrl=query?`${window.location.pathname}?${query}`:window.location.pathname;
+window.history.replaceState(null,'',nextUrl);
+}
+
+function syncControlsFromState(){
+document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.score===activeScore));
+document.querySelectorAll('.stat-cell').forEach(cell=>cell.classList.toggle('active',activeScore!=='all'&&cell.dataset.score===activeScore));
+document.getElementById('search').value=searchQuery;
+affilSelect.value=activeAffiliation;
+}
 
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
 
@@ -585,14 +644,9 @@ tbody.appendChild(frag);
 // Filter clicks (pills)
 document.querySelectorAll('.pill').forEach(btn=>{
 btn.addEventListener('click',()=>{
-document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');
 activeScore=btn.dataset.score;
-// sync stat cells
-document.querySelectorAll('.stat-cell').forEach(c=>c.classList.remove('active'));
-if(activeScore!=='all'){
-document.querySelector(`.stat-cell[data-score="${activeScore}"]`)?.classList.add('active');
-}
+syncControlsFromState();
+updateUrlState();
 render();
 });
 });
@@ -601,9 +655,9 @@ render();
 document.querySelectorAll('.stat-cell').forEach(cell=>{
 cell.addEventListener('click',()=>{
 const score=cell.dataset.score;
-if(activeScore===score){activeScore='all';cell.classList.remove('active');}
-else{activeScore=score;document.querySelectorAll('.stat-cell').forEach(c=>c.classList.remove('active'));cell.classList.add('active');}
-document.querySelectorAll('.pill').forEach(b=>{b.classList.remove('active');if(b.dataset.score===activeScore)b.classList.add('active');});
+activeScore=activeScore===score?'all':score;
+syncControlsFromState();
+updateUrlState();
 render();
 });
 });
@@ -611,12 +665,14 @@ render();
 // Search
 document.getElementById('search').addEventListener('input',e=>{
 searchQuery=e.target.value;
+updateUrlState();
 render();
 });
 
 // Affiliation filter
 affilSelect.addEventListener('change',e=>{
 activeAffiliation=e.target.value;
+updateUrlState();
 render();
 });
 
@@ -628,6 +684,7 @@ let lastFocused=null;
 
 function openDrawer(dev){
 activeDevName=dev.name;
+updateUrlState();
 const scoreLabelMap={5:'Urgent',4:'Proactive',3:'Cautious',2:'Dismissive',1:'No View'};
 document.getElementById('drawer-meta').textContent=dev.notable?'Notable Contributor':`Influence Rank #${dev.rank}`;
 document.getElementById('drawer-name').textContent=dev.name;
@@ -667,6 +724,7 @@ render();
 
 function closeDrawer(){
 activeDevName=null;
+updateUrlState();
 drawer.classList.remove('is-open');
 drawerBackdrop.classList.remove('is-open');
 drawer.setAttribute('aria-hidden','true');
@@ -683,7 +741,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.classList.co
 drawer.setAttribute('aria-hidden','true');
 drawerBackdrop.setAttribute('aria-hidden','true');
 
+syncControlsFromState();
 render();
+const initialDev=findDevByName(activeDevName);
+if(initialDev)openDrawer(initialDev);
 
 // === BUBBLE CHART ===
 const canvas = document.getElementById('bubble-chart');
