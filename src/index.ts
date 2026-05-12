@@ -27,6 +27,8 @@ interface PaymentRequiredV2 {
   accepts: PaymentRequirements[];
 }
 
+type BroadcastMode = "sponsored-relay" | "direct";
+
 function buildAcceptsList(): PaymentRequirements[] {
   const base = {
     scheme: "exact",
@@ -55,6 +57,16 @@ function buildAcceptsList(): PaymentRequirements[] {
       },
     },
   ];
+}
+
+function serverRequirementForMode(mode: BroadcastMode): PaymentRequirements {
+  const accepts = buildAcceptsList();
+  return mode === "direct" ? accepts[1] : accepts[0];
+}
+
+function stripRelayMetadata(requirement: PaymentRequirements): Omit<PaymentRequirements, "extra"> {
+  const { extra: _extra, ...settlementRequirement } = requirement;
+  return settlementRequirement;
 }
 
 function buildPaymentRequired(resourceUrl: string, description: string): PaymentRequiredV2 {
@@ -110,11 +122,14 @@ function paymentRequiredResponse(req: Request, description: string, extraBody?: 
 }
 
 async function settleWithRelay(paymentPayload: any): Promise<{ success: boolean; txid: string; payer?: string; reason?: string; held?: any; raw: any }> {
-  const accepted = paymentPayload?.accepted || buildAcceptsList()[0];
+  const accepted = serverRequirementForMode("sponsored-relay");
   const body = {
     x402Version: 2,
-    paymentPayload,
-    paymentRequirements: { ...accepted, extra: undefined },
+    paymentPayload: {
+      ...paymentPayload,
+      accepted,
+    },
+    paymentRequirements: stripRelayMetadata(accepted),
   };
   const res = await fetch(RELAY_SETTLE, {
     method: "POST",
