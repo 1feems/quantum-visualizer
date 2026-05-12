@@ -8,6 +8,7 @@ const RELAY_HEALTH = `${RELAY_BASE}/health`;
 const HIRO_BASE = "https://api.hiro.so";
 const DIRECT_POLL_MAX_MS = 8000;
 const DIRECT_POLL_INTERVAL_MS = 1000;
+const REPLAY_MARKER_VALUE = "1";
 
 interface PaymentRequirements {
   scheme: string;
@@ -340,7 +341,7 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
     sats: Number(PRICE_SATS),
     mode: broadcastMode,
   };
-  await env.REVENUE_LOG.put(txKey, JSON.stringify(event));
+  await env.REVENUE_LOG.put(txKey, REPLAY_MARKER_VALUE);
 
   const ledgerKey = "ledger:events";
   const ledgerRaw = await env.REVENUE_LOG.get(ledgerKey);
