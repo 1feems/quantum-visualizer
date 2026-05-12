@@ -60,8 +60,9 @@ function buildAcceptsList(): PaymentRequirements[] {
 }
 
 function serverRequirementForMode(mode: BroadcastMode): PaymentRequirements {
-  const accepts = buildAcceptsList();
-  return mode === "direct" ? accepts[1] : accepts[0];
+  const requirement = buildAcceptsList().find((item) => item.extra?.broadcast === mode);
+  if (!requirement) throw new Error(`missing payment requirement for ${mode}`);
+  return requirement;
 }
 
 function stripRelayMetadata(requirement: PaymentRequirements): Omit<PaymentRequirements, "extra"> {
