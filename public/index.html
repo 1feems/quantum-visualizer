@@ -108,6 +108,10 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .pill{padding:0.4rem 0.85rem;border:1px solid var(--border);border-radius:100px;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:0.75rem;font-weight:500;font-family:'Inter',sans-serif;transition:all 0.15s;white-space:nowrap}
 .pill:hover{border-color:var(--border-light);color:var(--text)}
 .pill.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.scorecard-actions{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end}
+.view-link-button{padding:0.42rem 0.85rem;border:1px solid rgba(247,147,26,0.25);border-radius:var(--radius-xs);background:rgba(247,147,26,0.08);color:var(--accent);cursor:pointer;font-size:0.75rem;font-weight:600;font-family:'Inter',sans-serif;transition:all 0.15s;white-space:nowrap}
+.view-link-button:hover{border-color:rgba(247,147,26,0.45);background:rgba(247,147,26,0.14);color:#fbbf24}
+.copy-status{min-width:3.5rem;font-size:0.72rem;color:var(--text-muted)}
 
 /* Table */
 .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
@@ -176,6 +180,7 @@ tr:hover td{background:var(--bg-elevated)}
   th,td{padding:0.5rem 0.6rem}
   .td-summary{max-width:200px;font-size:0.75rem}
   .method-grid{grid-template-columns:1fr}
+  .scorecard-actions{justify-content:flex-start;width:100%}
 }
 
 /* Search */
@@ -318,7 +323,11 @@ tbody tr.is-active td{background:var(--bg-hover)}
 <h2 class="section-title">Scorecard</h2>
 <span class="section-count" id="showing-count"></span>
 </div>
+<div class="scorecard-actions">
 <div class="filters" id="filters"></div>
+<button type="button" class="view-link-button" id="copy-view" title="Copy the current filters and selected developer as a shareable link">Copy view</button>
+<span class="copy-status" id="copy-status" aria-live="polite"></span>
+</div>
 </div>
 <div class="filter-row">
 <div class="search-wrap">
@@ -598,6 +607,20 @@ const nextUrl=query?`${window.location.pathname}?${query}`:window.location.pathn
 window.history.replaceState(null,'',nextUrl);
 }
 
+function copyText(text){
+if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(text);
+const textarea=document.createElement('textarea');
+textarea.value=text;
+textarea.setAttribute('readonly','');
+textarea.style.position='fixed';
+textarea.style.left='-9999px';
+document.body.appendChild(textarea);
+textarea.select();
+const ok=document.execCommand('copy');
+document.body.removeChild(textarea);
+return ok?Promise.resolve():Promise.reject(new Error('copy failed'));
+}
+
 function syncControlsFromState(){
 document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.score===activeScore));
 document.querySelectorAll('.stat-cell').forEach(cell=>cell.classList.toggle('active',activeScore!=='all'&&cell.dataset.score===activeScore));
@@ -674,6 +697,20 @@ affilSelect.addEventListener('change',e=>{
 activeAffiliation=e.target.value;
 updateUrlState();
 render();
+});
+
+const copyViewBtn=document.getElementById('copy-view');
+const copyStatus=document.getElementById('copy-status');
+copyViewBtn.addEventListener('click',async()=>{
+updateUrlState();
+try{
+await copyText(window.location.href);
+copyStatus.textContent='Copied';
+setTimeout(()=>{copyStatus.textContent='';},1800);
+}catch{
+copyStatus.textContent='Copy failed';
+setTimeout(()=>{copyStatus.textContent='';},2200);
+}
 });
 
 // === DETAIL DRAWER ===
