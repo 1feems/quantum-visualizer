@@ -6,9 +6,9 @@ const RELAY_BASE = "https://x402-relay.aibtc.com";
 const RELAY_SETTLE = `${RELAY_BASE}/settle`;
 const RELAY_HEALTH = `${RELAY_BASE}/health`;
 const HIRO_BASE = "https://api.hiro.so";
-const REPLAY_TTL_SECONDS = 60 * 60 * 24;
 const DIRECT_POLL_MAX_MS = 8000;
 const DIRECT_POLL_INTERVAL_MS = 1000;
+const REPLAY_MARKER_VALUE = "1";
 
 interface PaymentRequirements {
   scheme: string;
@@ -74,6 +74,21 @@ function b64decode<T = unknown>(s: string | null): T | null {
   try { return JSON.parse(atob(s)); } catch { return null; }
 }
 
+function normalizePaymentTxid(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  const hex = raw.startsWith("0x") ? raw.slice(2) : raw;
+  return /^[0-9a-f]{64}$/i.test(hex) ? "0x" + hex.toLowerCase() : null;
+}
+
+function normalizeSubmittedTxid(payload: any): string | null {
+  return normalizePaymentTxid(payload?.payload?.transaction);
+}
+
+function replayKey(txid: string): string {
+  const normalized = normalizePaymentTxid(txid);
+  return "txid:" + (normalized || txid.trim().toLowerCase());
+}
+
 function paymentRequiredResponse(req: Request, description: string, extraBody?: Record<string, unknown>): Response {
   const url = new URL(req.url);
   const required = buildPaymentRequired(url.toString(), description);
@@ -126,12 +141,10 @@ interface DirectVerifyResult {
 }
 
 async function verifyDirect(payload: any): Promise<DirectVerifyResult> {
-  const raw = String(payload?.payload?.transaction || "").trim();
-  const txidMatch = raw.match(/^0x[0-9a-f]{64}$/i);
-  if (!txidMatch) {
+  const txid = normalizeSubmittedTxid(payload);
+  if (!txid) {
     return { success: false, reason: "invalid_txid", txid: "", raw: { hint: "payload.transaction must be 0x-prefixed 64-char hex (the txid)" } };
   }
-  const txid = raw.toLowerCase();
   const deadline = Date.now() + DIRECT_POLL_MAX_MS;
   let lastTx: any = null;
   while (Date.now() < deadline) {
@@ -257,6 +270,21 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
 
   const broadcastMode = String(payload?.accepted?.extra?.broadcast || "sponsored-relay");
 
+  const submittedTxid = normalizeSubmittedTxid(payload);
+  if (broadcastMode === "direct" && submittedTxid) {
+    const seen = await env.REVENUE_LOG.get(replayKey(submittedTxid));
+    if (seen) {
+      return new Response(JSON.stringify({
+        x402Version: 2,
+        error: "replay_detected",
+        txid: submittedTxid,
+      }), {
+        status: 409,
+        headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
+      });
+    }
+  }
+
   let outcome: { success: boolean; txid: string; payer?: string; reason?: string; held?: any; raw?: any };
   if (broadcastMode === "direct") {
     outcome = await verifyDirect(payload);
@@ -264,7 +292,8 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
     outcome = await settleWithRelay(payload);
   }
 
-  if (!outcome.success || !outcome.txid) {
+  const settledTxid = normalizePaymentTxid(outcome.txid);
+  if (!outcome.success || !settledTxid) {
     const advice = outcome.held
       ? "Relay queue is held for your sender (nonce desync). Switch to broadcast=direct: build a non-sponsored sBTC transfer with your own STX gas, broadcast via Hiro, then submit 0x{txid} as payload.transaction."
       : broadcastMode === "direct"
@@ -273,7 +302,7 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
     return paymentRequiredResponse(req, description, {
       error: "settlement_failed",
       attempted_mode: broadcastMode,
-      reason: outcome.reason || "unknown",
+      reason: outcome.reason || (settledTxid ? "unknown" : "invalid_settlement_txid"),
       held: outcome.held || null,
       relay: broadcastMode === "sponsored-relay" ? outcome.raw : undefined,
       verifier: broadcastMode === "direct" ? outcome.raw : undefined,
@@ -282,13 +311,13 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
     });
   }
 
-  const txKey = "txid:" + outcome.txid;
+  const txKey = replayKey(settledTxid);
   const seen = await env.REVENUE_LOG.get(txKey);
   if (seen) {
     return new Response(JSON.stringify({
       x402Version: 2,
       error: "replay_detected",
-      txid: outcome.txid,
+      txid: settledTxid,
     }), {
       status: 409,
       headers: { "content-type": "application/json", "access-control-allow-origin": "*" },
@@ -307,12 +336,12 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
   const event = {
     ts: new Date().toISOString(),
     slug,
-    txid: outcome.txid,
+    txid: settledTxid,
     payer: outcome.payer || null,
     sats: Number(PRICE_SATS),
     mode: broadcastMode,
   };
-  await env.REVENUE_LOG.put(txKey, JSON.stringify(event), { expirationTtl: REPLAY_TTL_SECONDS });
+  await env.REVENUE_LOG.put(txKey, REPLAY_MARKER_VALUE);
 
   const ledgerKey = "ledger:events";
   const ledgerRaw = await env.REVENUE_LOG.get(ledgerKey);
@@ -322,13 +351,13 @@ async function handlePremium(req: Request, env: any, slug: string, sliceFn: (dat
 
   const settlementResponse = {
     success: true,
-    transaction: outcome.txid,
+    transaction: settledTxid,
     network: NETWORK,
     payer: outcome.payer || "",
   };
   return new Response(JSON.stringify({
     ...slice,
-    payment: { txid: outcome.txid, sats: Number(PRICE_SATS), payer: outcome.payer || null, mode: broadcastMode },
+    payment: { txid: settledTxid, sats: Number(PRICE_SATS), payer: outcome.payer || null, mode: broadcastMode },
   }), {
     status: 200,
     headers: {
@@ -404,7 +433,7 @@ async function handleDoctor(_req: Request, env: any): Promise<Response> {
     fallback_advice: "If a sponsored-relay attempt returns 402 with held=true (relay queue desynced for your sender), retry the same call as broadcast=direct. Each call's reply includes specific advice.",
     revenue_ledger: ledgerStats,
     notes: [
-      "Replay protection: each settled txid is single-use (24h TTL in KV).",
+      "Replay protection: each settled txid is single-use.",
       "All sats settle to a dedicated service wallet — separate from any operator's main wallet.",
       "Free, no-payment endpoints: /api/world/company, /api/world/customer, /api/world/premium/doctor.",
     ],
