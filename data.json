@@ -274,7 +274,7 @@
         "date": "2026-05-13",
         "developer": "Cain, Xu, Bluvstein et al.",
         "change": "new entry — score 4 (Proactive), pq_work_volume 1; neutral-atom Shor implementation path for P-256 ECDLP with ~26k physical qubits (arXiv 2603.28627) — rank 69",
-        "pr": "#TBD",
+        "pr": "#50",
         "contributor": "@1feems"
       }
     ],
