@@ -5,14 +5,14 @@
     "agent": "Iskander",
     "agent_btc": "bc1qxj5jtv8jwm7zv2nczn2xfq9agjgj0sqpsxn43h",
     "agent_bns": "iskander-ai.btc",
-    "version": "3.0",
+    "version": "3.1",
     "bounty": "AIBTC Bounty #38 - Bitcoin Quantum Upgrade",
-    "total_assessed": 68,
+    "total_assessed": 69,
     "ranked": 50,
-    "notable_additions": 18,
+    "notable_additions": 19,
     "score_distribution": {
       "5_urgent": 7,
-"4_proactive": 18,
+"4_proactive": 19,
       "3_cautious": 8,
       "2_dismissive": 8,
       "1_no_known_view": 27
@@ -269,9 +269,16 @@
         "change": "score 3→4 — May 2026 bitcoin-dev post proposes immediate post-quantum BIP-324 transport upgrade path using ML-KEM/hybrid KEM designs",
         "pr": "#39",
         "contributor": "@NoeFabris"
+      },
+      {
+        "date": "2026-05-13",
+        "developer": "Cain, Xu, Bluvstein et al.",
+        "change": "new entry — score 4 (Proactive), pq_work_volume 1; neutral-atom Shor implementation path for P-256 ECDLP with ~26k physical qubits (arXiv 2603.28627) — rank 69",
+        "pr": "#TBD",
+        "contributor": "@1feems"
       }
     ],
-    "last_updated": "2026-05-11",
+    "last_updated": "2026-05-13",
     "next_review": "weekly — Sundays (DRI synthesis)"
   },
   "developers": [
@@ -1306,6 +1313,21 @@
         "https://arxiv.org/abs/2604.02311"
       ],
       "last_verified": "2026-05-11"
+    },
+    {
+      "rank": 69,
+      "name": "Cain, Xu, Bluvstein et al. (Caltech/Harvard)",
+      "affiliation": "Academic neutral-atom quantum computing research",
+      "role": "Quantum hardware and Shor algorithm researchers",
+      "quantum_urgency_score": 4,
+      "pq_work_volume": 1,
+      "notable": true,
+      "summary": "Authors of arXiv 2603.28627 'Shor's algorithm is possible with as few as 10,000 reconfigurable atomic qubits' (Mar 2026). Demonstrates that a ~26,000-physical-qubit neutral-atom system could break P-256 elliptic curve cryptography within days. Bitcoin's secp256k1 shares the same 256-bit field size, inheriting the result directly. Establishes a third viable hardware trajectory toward cryptographically relevant ECDLP attacks, alongside superconducting and trapped-ion approaches.",
+      "key_source": "https://arxiv.org/abs/2603.28627",
+      "sources": [
+        "https://arxiv.org/abs/2603.28627"
+      ],
+      "last_verified": "2026-05-13"
     }
   ]
 }
