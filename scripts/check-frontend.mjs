@@ -15,11 +15,16 @@ for (const id of [
   "freshness-body",
   "freshness-updates",
   "freshness-stale-list",
+  "payout-panel",
+  "payout-kpis",
+  "payout-ledger-body",
 ]) {
   assert(html.includes(`id="${id}"`), `missing #${id}`);
 }
 
 assert(html.includes("function renderFreshnessAudit"), "missing renderFreshnessAudit()");
+assert(html.includes("function renderPayoutLedger"), "missing renderPayoutLedger()");
+assert(html.includes("fetch('/customer.json')"), "missing customer world model fetch");
 
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
 assert(scriptMatch, "missing inline script block");
