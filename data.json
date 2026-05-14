@@ -269,9 +269,23 @@
         "change": "score 3→4 — May 2026 bitcoin-dev post proposes immediate post-quantum BIP-324 transport upgrade path using ML-KEM/hybrid KEM designs",
         "pr": "#39",
         "contributor": "@NoeFabris"
+      },
+      {
+        "date": "2026-05-14",
+        "developer": "Ava Chow",
+        "change": "last_verified updated to 2026-05-14 — May 14 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103. No quantum/PQC statements found in 2026-05-10 to 2026-05-14 window. Score unchanged at 1.",
+        "pr": null,
+        "contributor": "@gregoryford963-sys"
+      },
+      {
+        "date": "2026-05-14",
+        "developer": "Jon Atack",
+        "change": "last_verified updated to 2026-05-14 — May 14 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103. No quantum/PQC statements found in 2026-05-10 to 2026-05-14 window. Score unchanged at 1.",
+        "pr": null,
+        "contributor": "@gregoryford963-sys"
       }
     ],
-    "last_updated": "2026-05-11",
+    "last_updated": "2026-05-14",
     "next_review": "weekly — Sundays (DRI synthesis)"
   },
   "developers": [
@@ -356,13 +370,13 @@
       "quantum_urgency_score": 1,
       "pq_work_volume": 1,
       "notable": false,
-      "summary": "No public quantum urgency position found, but directly engaged with BIP-360 witness-version design on bitcoin-dev and is credited in BIP-360 acknowledgements as a reviewer/contributor. Technical review posture, not activation advocacy.",
+      "summary": "No public quantum urgency position found, but directly engaged with BIP-360 witness-version design on bitcoin-dev and is credited in BIP-360 acknowledgements as a reviewer/contributor. Technical review posture, not activation advocacy. May 14 sweep of bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103 found no new statements in the 2026-05-10 to 2026-05-14 window. Score unchanged.",
       "key_source": "https://gnusha.org/pi/bitcoindev/d5b68a7e-0eea-465d-95f5-9cb6557697d8%40achow101.com/",
       "sources": [
         "https://gnusha.org/pi/bitcoindev/d5b68a7e-0eea-465d-95f5-9cb6557697d8%40achow101.com/",
         "https://bips.dev/360/"
       ],
-      "last_verified": "2026-05-10"
+      "last_verified": "2026-05-14"
     },
     {
       "rank": 7,
@@ -622,13 +636,13 @@
       "quantum_urgency_score": 1,
       "pq_work_volume": 1,
       "notable": false,
-      "summary": "No public quantum urgency position found, but BIP-360 credits him among reviewers/contributors. Treat as documented technical review involvement, not public advocacy for an urgent PQ upgrade.",
+      "summary": "No public quantum urgency position found, but BIP-360 credits him among reviewers/contributors. Treat as documented technical review involvement, not public advocacy for an urgent PQ upgrade. May 14 sweep of bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103 found no new statements in the 2026-05-10 to 2026-05-14 window. Score unchanged.",
       "key_source": "https://bips.dev/360/",
       "sources": [
         "https://bips.dev/360/",
         "https://github.com/bitcoin/bips/blob/master/bip-0360.mediawiki"
       ],
-      "last_verified": "2026-05-10"
+      "last_verified": "2026-05-14"
     },
     {
       "rank": 25,
