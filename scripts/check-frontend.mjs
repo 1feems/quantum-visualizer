@@ -11,6 +11,10 @@ function assert(condition, message) {
 }
 
 for (const id of [
+  "affiliation-panel",
+  "affiliation-summary",
+  "affiliation-count",
+  "affiliation-body",
   "freshness-panel",
   "freshness-body",
   "freshness-updates",
@@ -19,6 +23,10 @@ for (const id of [
   assert(html.includes(`id="${id}"`), `missing #${id}`);
 }
 
+assert(
+  html.includes("function renderAffiliationReadiness"),
+  "missing renderAffiliationReadiness()",
+);
 assert(html.includes("function renderFreshnessAudit"), "missing renderFreshnessAudit()");
 
 const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
