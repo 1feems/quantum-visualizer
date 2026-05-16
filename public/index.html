@@ -78,6 +78,44 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple
 .s2 .stat-num{color:var(--blue)}.s2 .stat-bar-fill{background:var(--blue)}
 .s1 .stat-num{color:var(--gray)}.s1 .stat-bar-fill{background:var(--gray)}
 
+/* Affiliation readiness */
+.affiliation-section{padding:2.5rem 0;border-bottom:1px solid var(--border)}
+.affiliation-panel{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);overflow:hidden}
+.affiliation-head{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.affiliation-sub{font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;max-width:720px;line-height:1.6}
+.affiliation-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.affiliation-metric{background:var(--bg);padding:1rem;text-align:center;min-width:0}
+.affiliation-num{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:800;letter-spacing:0;color:var(--accent)}
+.affiliation-label{font-size:0.62rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-top:0.2rem}
+.affiliation-table-wrap{padding:1.25rem;background:var(--bg-elevated);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.affiliation-table{min-width:760px}
+.affiliation-table tbody tr{cursor:pointer}
+.affiliation-table tbody tr.is-active td{background:var(--bg-hover)}
+.affiliation-org{font-weight:700;white-space:nowrap}
+.affiliation-devs{color:var(--text-secondary);font-size:0.78rem;line-height:1.5;max-width:360px}
+.affiliation-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:0.95rem;white-space:nowrap}
+.affiliation-score.high{color:var(--red)}
+.affiliation-score.medium{color:var(--orange)}
+.affiliation-score.low{color:var(--blue)}
+.affiliation-score.none{color:var(--gray)}
+.affiliation-small{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-secondary);white-space:nowrap}
+@media(max-width:760px){
+  .affiliation-head{align-items:flex-start}
+  .affiliation-summary{grid-template-columns:1fr 1fr}
+  .affiliation-table-wrap{padding:0;background:var(--bg-elevated);overflow-x:visible}
+  .affiliation-table{min-width:0}
+  .affiliation-table thead{display:none}
+  .affiliation-table,.affiliation-table tbody,.affiliation-table tr,.affiliation-table td{display:block;width:100%}
+  .affiliation-table tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0.65rem 0.75rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+  .affiliation-table tbody tr:last-child{border-bottom:none}
+  .affiliation-table tbody tr.is-active{background:var(--bg-hover)}
+  .affiliation-table td{padding:0;border-bottom:0}
+  .affiliation-table td::before{content:attr(data-label);display:block;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.18rem}
+  .affiliation-table td:first-child,.affiliation-table td:last-child{grid-column:1/-1}
+  .affiliation-org{white-space:normal}
+  .affiliation-devs{max-width:none}
+}
+
 /* Chart section */
 .chart-section{padding:2.5rem 0}
 .chart-card{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
@@ -313,6 +351,37 @@ tbody tr.is-active td{background:var(--bg-hover)}
 <section class="stats-bar">
 <div class="container">
 <div class="stats-grid" id="stats"></div>
+</div>
+</section>
+
+<!-- Affiliation Readiness -->
+<section class="affiliation-section">
+<div class="container">
+<div class="affiliation-panel" id="affiliation-panel">
+<div class="affiliation-head">
+<div>
+<h2 class="section-title">Affiliation Readiness Matrix</h2>
+<p class="affiliation-sub">Institution-level view of quantum urgency concentration, public-position coverage, and silent seats across the developer map.</p>
+</div>
+<span class="section-count" id="affiliation-count"></span>
+</div>
+<div class="affiliation-summary" id="affiliation-summary"></div>
+<div class="affiliation-table-wrap">
+<table class="affiliation-table">
+<thead>
+<tr>
+<th>Affiliation</th>
+<th style="width:5rem">Devs</th>
+<th style="width:6rem">Avg Score</th>
+<th style="width:5rem">Voiced</th>
+<th style="width:5rem">Silent</th>
+<th>Priority Names</th>
+</tr>
+</thead>
+<tbody id="affiliation-body"></tbody>
+</table>
+</div>
+</div>
 </div>
 </section>
 
@@ -825,11 +894,105 @@ return ok?Promise.resolve():Promise.reject(new Error('copy failed'));
 function syncControlsFromState(){
 document.querySelectorAll('.pill').forEach(btn=>btn.classList.toggle('active',btn.dataset.score===activeScore));
 document.querySelectorAll('.stat-cell').forEach(cell=>cell.classList.toggle('active',activeScore!=='all'&&cell.dataset.score===activeScore));
+document.querySelectorAll('.affiliation-row').forEach(row=>row.classList.toggle('is-active',row.dataset.affiliation===activeAffiliation));
 document.getElementById('search').value=searchQuery;
 affilSelect.value=activeAffiliation;
 }
 
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);}
+
+function scoreTone(avg){
+if(avg>=4)return 'high';
+if(avg>=3)return 'medium';
+if(avg>1)return 'low';
+return 'none';
+}
+
+function collectAffiliationReadiness(){
+const groups=new Map();
+devs.forEach(dev=>{
+const affiliation=(dev.affiliation||'Independent / Unknown').trim()||'Independent / Unknown';
+if(!groups.has(affiliation)){
+groups.set(affiliation,{affiliation,members:[],count:0,totalScore:0,voiced:0,silent:0,urgent:0,pqWork:0});
+}
+const group=groups.get(affiliation);
+const score=Number(dev.quantum_urgency_score)||1;
+group.members.push(dev);
+group.count+=1;
+group.totalScore+=score;
+group.pqWork+=Number(dev.pq_work_volume)||0;
+if(score>1)group.voiced+=1;
+else group.silent+=1;
+if(score>=4)group.urgent+=1;
+});
+return Array.from(groups.values()).map(group=>{
+const avg=group.totalScore/Math.max(1,group.count);
+return {
+...group,
+avg,
+priority:(group.urgent*4)+(avg*2)+Math.log2(group.count+1)+(group.silent*0.5)
+};
+}).sort((a,b)=>
+b.priority-a.priority||
+b.urgent-a.urgent||
+b.count-a.count||
+a.affiliation.localeCompare(b.affiliation)
+);
+}
+
+function applyAffiliationFilter(affiliation){
+activeAffiliation=affiliation;
+activeScore='all';
+searchQuery='';
+activeDevName=null;
+syncControlsFromState();
+updateUrlState();
+render();
+document.querySelector('.table-section').scrollIntoView({block:'start'});
+}
+
+function renderAffiliationReadiness(){
+const groups=collectAffiliationReadiness();
+const visible=groups.slice(0,12);
+const summary=[
+{num:groups.length,label:'affiliations'},
+{num:groups.filter(g=>g.count>1).length,label:'multi-dev orgs'},
+{num:groups.reduce((sum,g)=>sum+g.silent,0),label:'silent seats'},
+{num:groups.filter(g=>g.urgent>0).length,label:'urgent orgs'}
+];
+document.getElementById('affiliation-count').textContent=visible.length===groups.length?`${groups.length} affiliations`:`Top ${visible.length} of ${groups.length} affiliations`;
+document.getElementById('affiliation-summary').innerHTML=summary.map(item=>`<div class="affiliation-metric"><div class="affiliation-num">${item.num}</div><div class="affiliation-label">${item.label}</div></div>`).join('');
+const body=document.getElementById('affiliation-body');
+if(!visible.length){
+body.innerHTML='<tr><td colspan="6" class="empty">No affiliation data available.</td></tr>';
+return;
+}
+body.innerHTML=visible.map(group=>{
+const priorityNames=group.members.slice().sort((a,b)=>
+(Number(b.quantum_urgency_score)||1)-(Number(a.quantum_urgency_score)||1)||
+(a.rank||9999)-(b.rank||9999)||
+a.name.localeCompare(b.name)
+).slice(0,4).map(dev=>`${escapeHtml(dev.name)} (${Number(dev.quantum_urgency_score)||1})`).join(', ');
+const avg=group.avg.toFixed(1);
+return `<tr class="affiliation-row${group.affiliation===activeAffiliation?' is-active':''}" tabindex="0" data-affiliation="${escapeHtml(group.affiliation)}">
+<td class="affiliation-org" data-label="Affiliation">${escapeHtml(group.affiliation)}</td>
+<td class="affiliation-small" data-label="Devs">${group.count}</td>
+<td data-label="Avg Score"><span class="affiliation-score ${scoreTone(group.avg)}">${avg}</span></td>
+<td class="affiliation-small" data-label="Voiced">${group.voiced}</td>
+<td class="affiliation-small" data-label="Silent">${group.silent}</td>
+<td class="affiliation-devs" data-label="Priority Names">${priorityNames}</td>
+</tr>`;
+}).join('');
+body.querySelectorAll('.affiliation-row').forEach(row=>{
+row.addEventListener('click',()=>applyAffiliationFilter(row.dataset.affiliation));
+row.addEventListener('keydown',event=>{
+if(event.key==='Enter'||event.key===' '){
+event.preventDefault();
+applyAffiliationFilter(row.dataset.affiliation);
+}
+});
+});
+}
 
 function render(){
 const tbody=document.getElementById('table-body');
@@ -979,6 +1142,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.classList.co
 drawer.setAttribute('aria-hidden','true');
 drawerBackdrop.setAttribute('aria-hidden','true');
 
+renderAffiliationReadiness();
 syncControlsFromState();
 render();
 const initialDev=findDevByName(activeDevName);

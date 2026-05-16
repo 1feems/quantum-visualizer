@@ -11,6 +11,10 @@ function assert(condition, message) {
 }
 
 for (const id of [
+  "affiliation-panel",
+  "affiliation-summary",
+  "affiliation-count",
+  "affiliation-body",
   "freshness-panel",
   "freshness-body",
   "freshness-updates",
@@ -22,6 +26,10 @@ for (const id of [
   assert(html.includes(`id="${id}"`), `missing #${id}`);
 }
 
+assert(
+  html.includes("function renderAffiliationReadiness"),
+  "missing renderAffiliationReadiness()",
+);
 assert(html.includes("function renderFreshnessAudit"), "missing renderFreshnessAudit()");
 assert(html.includes("function renderPayoutLedger"), "missing renderPayoutLedger()");
 assert(html.includes("fetch('/customer.json')"), "missing customer world model fetch");
