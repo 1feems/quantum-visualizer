@@ -12,7 +12,7 @@
     "notable_additions": 18,
     "score_distribution": {
       "5_urgent": 7,
-"4_proactive": 18,
+      "4_proactive": 18,
       "3_cautious": 8,
       "2_dismissive": 8,
       "1_no_known_view": 27
@@ -269,9 +269,23 @@
         "change": "score 3→4 — May 2026 bitcoin-dev post proposes immediate post-quantum BIP-324 transport upgrade path using ML-KEM/hybrid KEM designs",
         "pr": "#39",
         "contributor": "@NoeFabris"
+      },
+      {
+        "date": "2026-05-14",
+        "developer": "Ava Chow",
+        "change": "last_verified updated to 2026-05-14 — May 14 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103. No quantum/PQC statements found in 2026-05-10 to 2026-05-14 window. Score unchanged at 1.",
+        "pr": null,
+        "contributor": "@gregoryford963-sys"
+      },
+      {
+        "date": "2026-05-14",
+        "developer": "Jon Atack",
+        "change": "last_verified updated to 2026-05-14 — May 14 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103. No quantum/PQC statements found in 2026-05-10 to 2026-05-14 window. Score unchanged at 1.",
+        "pr": null,
+        "contributor": "@gregoryford963-sys"
       }
     ],
-    "last_updated": "2026-05-11",
+    "last_updated": "2026-05-14",
     "next_review": "weekly — Sundays (DRI synthesis)"
   },
   "developers": [
@@ -356,13 +370,13 @@
       "quantum_urgency_score": 1,
       "pq_work_volume": 1,
       "notable": false,
-      "summary": "No public quantum urgency position found, but directly engaged with BIP-360 witness-version design on bitcoin-dev and is credited in BIP-360 acknowledgements as a reviewer/contributor. Technical review posture, not activation advocacy.",
+      "summary": "No public quantum urgency position found, but directly engaged with BIP-360 witness-version design on bitcoin-dev and is credited in BIP-360 acknowledgements as a reviewer/contributor. Technical review posture, not activation advocacy. May 14 sweep of bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103 found no new statements in the 2026-05-10 to 2026-05-14 window. Score unchanged.",
       "key_source": "https://gnusha.org/pi/bitcoindev/d5b68a7e-0eea-465d-95f5-9cb6557697d8%40achow101.com/",
       "sources": [
         "https://gnusha.org/pi/bitcoindev/d5b68a7e-0eea-465d-95f5-9cb6557697d8%40achow101.com/",
         "https://bips.dev/360/"
       ],
-      "last_verified": "2026-05-10"
+      "last_verified": "2026-05-14"
     },
     {
       "rank": 7,
@@ -424,7 +438,16 @@
       "summary": "No public statements on quantum risk; focused on multiprocess architecture",
       "key_source": null,
       "sources": [],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 11,
@@ -437,7 +460,16 @@
       "summary": "No public statements on quantum risk; focused on libbitcoinkernel",
       "key_source": null,
       "sources": [],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 12,
@@ -463,7 +495,16 @@
       "summary": "No public statements on quantum risk; focused on P2P relay and mempool",
       "key_source": null,
       "sources": [],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 14,
@@ -622,13 +663,13 @@
       "quantum_urgency_score": 1,
       "pq_work_volume": 1,
       "notable": false,
-      "summary": "No public quantum urgency position found, but BIP-360 credits him among reviewers/contributors. Treat as documented technical review involvement, not public advocacy for an urgent PQ upgrade.",
+      "summary": "No public quantum urgency position found, but BIP-360 credits him among reviewers/contributors. Treat as documented technical review involvement, not public advocacy for an urgent PQ upgrade. May 14 sweep of bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103 found no new statements in the 2026-05-10 to 2026-05-14 window. Score unchanged.",
       "key_source": "https://bips.dev/360/",
       "sources": [
         "https://bips.dev/360/",
         "https://github.com/bitcoin/bips/blob/master/bip-0360.mediawiki"
       ],
-      "last_verified": "2026-05-10"
+      "last_verified": "2026-05-14"
     },
     {
       "rank": 25,
@@ -644,7 +685,16 @@
         "https://bips.dev/352/",
         "https://github.com/bitcoin/bips/blob/master/bip-0352.mediawiki"
       ],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 26,
@@ -691,7 +741,16 @@
       "summary": "No public statements on quantum risk",
       "key_source": null,
       "sources": [],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 29,
@@ -761,7 +820,16 @@
         "https://bitcoinops.org/en/newsletters/2025/08/01/",
         "https://bitcoinops.org/en/newsletters/2026/02/06/"
       ],
-      "last_verified": "2026-04-10"
+      "last_verified": "2026-05-13",
+      "update_history": [
+        {
+          "date": "2026-05-13",
+          "score_before": 1,
+          "score_after": 1,
+          "source": "null-result sweep",
+          "note": "May 2026 null-result sweep: searched bitcoin-dev ML (gnusha.org), Delving Bitcoin, GitHub BIP-360 PRs #2102/#2103, and Google Groups bitcoindev. No quantum/PQC statements found in 2026-04-10 to 2026-05-13 window. Score unchanged."
+        }
+      ]
     },
     {
       "rank": 34,
@@ -930,7 +998,7 @@
       "sources": [
         "https://lists.linuxfoundation.org/pipermail/bitcoin-dev/2021-March/018645.html"
       ],
-"last_verified": "2026-05-11"
+      "last_verified": "2026-05-11"
     },
     {
       "rank": 45,
@@ -958,7 +1026,7 @@
       "sources": [
         "https://freicoin.substack.com/p/why-im-against-taproot"
       ],
-"last_verified": "2026-05-11"
+      "last_verified": "2026-05-11"
     },
     {
       "rank": 47,
@@ -997,7 +1065,7 @@
       "summary": "No public statements on quantum risk. May 2026 sweep of bitcoin-dev (gnusha.org), Delving Bitcoin (b10c.me), and BIP activity found no quantum-adjacent statements. Focus confirmed as Bitcoin Core dev, P2P network monitoring, and mining pool analysis.",
       "key_source": null,
       "sources": [],
-"last_verified": "2026-05-11"
+      "last_verified": "2026-05-11"
     },
     {
       "rank": 50,
