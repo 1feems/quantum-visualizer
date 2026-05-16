@@ -169,6 +169,27 @@ tr:hover td{background:var(--bg-elevated)}
 .freshness-chip span{font-family:'JetBrains Mono',monospace;color:var(--text-muted);font-size:0.68rem}
 @media(max-width:760px){.freshness-body{grid-template-columns:1fr}.freshness-kpis{grid-template-columns:1fr 1fr}.freshness-item{grid-template-columns:1fr}}
 
+/* Payout ledger */
+.payout-section{padding:2.5rem 0;border-top:1px solid var(--border)}
+.payout-panel{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-elevated);overflow:hidden}
+.payout-head{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.payout-sub{font-size:0.82rem;color:var(--text-secondary);margin-top:0.35rem;max-width:720px;line-height:1.6}
+.payout-body{padding:1.25rem;background:var(--bg)}
+.payout-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:1rem}
+.payout-kpi{background:var(--bg-elevated);padding:0.9rem;min-width:0}
+.payout-num{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:800;letter-spacing:0}
+.payout-label{font-size:0.62rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-top:0.2rem}
+.payout-table-wrap{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:auto;-webkit-overflow-scrolling:touch}
+.payout-table{min-width:760px;font-size:0.82rem}
+.payout-table td{background:var(--bg)}
+.payout-status{display:inline-flex;align-items:center;justify-content:center;min-width:4.5rem;padding:0.25rem 0.45rem;border:1px solid var(--border);border-radius:100px;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);white-space:nowrap}
+.payout-status.status-paid{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.1);color:#22c55e}
+.payout-status.status-requested,.payout-status.status-acked{border-color:rgba(247,147,26,0.28);background:rgba(247,147,26,0.08);color:var(--accent)}
+.payout-link{font-size:0.75rem;color:var(--accent);text-decoration:none;font-weight:500;white-space:nowrap}
+.payout-link:hover{text-decoration:underline}
+.payout-mono{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-secondary);word-break:break-all}
+@media(max-width:760px){.payout-kpis{grid-template-columns:1fr}.payout-body{padding:0.75rem}}
+
 /* API section */
 .api-section{padding:2rem 0;border-top:1px solid var(--border)}
 .api-card{display:flex;align-items:center;justify-content:space-between;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem 1.25rem;flex-wrap:wrap;gap:0.75rem}
@@ -410,6 +431,40 @@ tbody tr.is-active td{background:var(--bg-hover)}
 </div>
 </section>
 
+<!-- Payout Ledger -->
+<section class="payout-section">
+<div class="container">
+<div class="payout-panel" id="payout-panel">
+<div class="payout-head">
+<div>
+<h2 class="section-title">Payout Ledger</h2>
+<p class="payout-sub">Customer world model view of bounty #33 payout requests and payment proof. Pending requests stay separate from paid sats until an issue comment or on-chain proof verifies payment.</p>
+</div>
+<span class="section-count" id="payout-asof"></span>
+</div>
+<div class="payout-body">
+<div class="payout-kpis" id="payout-kpis"></div>
+<div class="payout-table-wrap">
+<table class="payout-table">
+<thead>
+<tr>
+<th>Comment</th>
+<th>PR</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Verifier</th>
+</tr>
+</thead>
+<tbody id="payout-ledger-body">
+<tr><td colspan="5" class="empty">Loading payout ledger...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</section>
+
 <!-- Methodology -->
 <section class="method-section">
 <div class="container">
@@ -640,6 +695,55 @@ updatesEl.innerHTML=updates.length
 }
 
 renderFreshnessAudit();
+
+function formatSats(value){
+if(value==null||value===''||Number.isNaN(Number(value)))return '--';
+return Number(value).toLocaleString()+' sats';
+}
+
+function payoutStatusClass(value){
+return 'status-'+String(value||'tracked').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+function renderPayoutLedger(customer){
+const body=document.getElementById('payout-ledger-body');
+const kpis=document.getElementById('payout-kpis');
+const asof=document.getElementById('payout-asof');
+if(!body||!kpis||!asof)return;
+const ledger=customer&&customer.sats_flow&&customer.sats_flow.bounty_33_payout_ledger;
+if(!ledger||!Array.isArray(ledger.rows)){
+asof.textContent='Customer model unavailable';
+kpis.innerHTML='<div class="payout-kpi"><div class="payout-num">--</div><div class="payout-label">requested</div></div><div class="payout-kpi"><div class="payout-num">--</div><div class="payout-label">paid</div></div><div class="payout-kpi"><div class="payout-num">--</div><div class="payout-label">pending</div></div>';
+body.innerHTML='<tr><td colspan="5" class="empty">Payout ledger data is not available in /customer.json.</td></tr>';
+return;
+}
+asof.textContent=ledger.extracted_at?'Extracted '+String(ledger.extracted_at).slice(0,10):'Issue #33';
+kpis.innerHTML=[
+{num:formatSats(ledger.requested_sats),label:'requested'},
+{num:formatSats(ledger.confirmed_paid_sats),label:'confirmed paid'},
+{num:ledger.pending_requests||0,label:'pending rows'}
+].map(k=>`<div class="payout-kpi"><div class="payout-num">${escapeHtml(k.num)}</div><div class="payout-label">${escapeHtml(k.label)}</div></div>`).join('');
+const rows=ledger.rows.slice().reverse();
+body.innerHTML=rows.length
+?rows.map(r=>{
+const verifier=r.txid
+?`<div class="payout-mono">${escapeHtml(r.txid)}</div>`
+:r.btc_address?`<div class="payout-mono">${escapeHtml(r.btc_address)}</div>`:'<span style="color:var(--text-muted)">awaiting proof</span>';
+return `<tr>
+<td><a class="payout-link" href="${escapeHtml(r.comment_url)}" target="_blank" rel="noopener">${escapeHtml(r.author||'comment')}</a><div class="td-affil">${escapeHtml((r.created_at||'').slice(0,10))}</div></td>
+<td>${r.pr?escapeHtml(r.pr):'<span style="color:var(--text-muted)">--</span>'}<div class="td-affil">${escapeHtml(r.pr_state||'unknown')}</div></td>
+<td class="td-name">${escapeHtml(formatSats(r.amount_sats))}</td>
+<td><span class="payout-status ${payoutStatusClass(r.state)}">${escapeHtml(r.state||'tracked')}</span></td>
+<td>${verifier}</td>
+</tr>`;
+}).join('')
+:'<tr><td colspan="5" class="empty">No payout request or payment proof comments found in issue #33.</td></tr>';
+}
+
+fetch('/customer.json')
+.then(r=>r.ok?r.json():null)
+.then(renderPayoutLedger)
+.catch(()=>renderPayoutLedger(null));
 
 // Stats
 const statsEl=document.getElementById('stats');

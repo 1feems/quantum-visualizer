@@ -23,23 +23,134 @@ function gh(cmd) {
   return execSync(cmd, { encoding: "utf8", maxBuffer: 50 * 1024 * 1024 });
 }
 
+function readExistingCustomer() {
+  try {
+    return JSON.parse(fs.readFileSync(OUT, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
 function readEnv(key) {
-  const envFile = `${process.env.HOME}/.openclaw/.env`;
-  const line = fs.readFileSync(envFile, "utf8").split("\n").find((l) => l.startsWith(`${key}=`));
-  if (!line) throw new Error(`${key} not in ${envFile}`);
-  return line.slice(key.length + 1);
+  if (process.env[key]) return process.env[key];
+  const homes = [process.env.HOME, process.env.USERPROFILE].filter(Boolean);
+  for (const home of homes) {
+    const envFile = `${home}/.openclaw/.env`;
+    if (!fs.existsSync(envFile)) continue;
+    const line = fs.readFileSync(envFile, "utf8").split("\n").find((l) => l.startsWith(`${key}=`));
+    if (line) return line.slice(key.length + 1).trim();
+  }
+  throw new Error(`${key} not found in environment or .openclaw/.env`);
 }
 
-async function fetchRevenueLedger() {
-  const token = readEnv("CLOUDFLARE_API_TOKEN");
-  const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/ledger:events`;
-  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (r.status === 404) return [];
-  if (!r.ok) throw new Error(`KV fetch failed: ${r.status}`);
-  const text = await r.text();
-  try { return JSON.parse(text); } catch { return []; }
+async function fetchRevenueLedger(existing) {
+  try {
+    const token = readEnv("CLOUDFLARE_API_TOKEN");
+    const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/storage/kv/namespaces/${KV_NAMESPACE_ID}/values/ledger:events`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (r.status === 404) return { events: [], totalSats: 0, totalEvents: 0, last7dEvents: 0, fetchedAt: new Date().toISOString(), note: null };
+    if (!r.ok) throw new Error(`KV fetch failed: ${r.status}`);
+    const text = await r.text();
+    const events = JSON.parse(text || "[]");
+    const last7dEvents = events.filter((e) => (e.ts || "").slice(0, 10) >= sevenDaysAgo).length;
+    return {
+      events,
+      totalSats: events.reduce((sum, e) => sum + (e.sats || 0), 0),
+      totalEvents: events.length,
+      last7dEvents,
+      fetchedAt: new Date().toISOString(),
+      note: null,
+    };
+  } catch (error) {
+    const sats = existing?.sats_flow?.revenue_x402_sats ?? "unknown";
+    const events = existing?.sats_flow?.revenue_x402_events ?? "unknown";
+    const last7dEvents = existing?.sats_flow?.revenue_x402_last_7d_events;
+    return {
+      events: existing?.sats_flow?.revenue_x402_recent || [],
+      totalSats: sats,
+      totalEvents: events,
+      last7dEvents: typeof last7dEvents === "number" ? last7dEvents : "unknown",
+      fetchedAt: `not refreshed - ${error.message}`,
+      note: "Revenue KV unavailable in this environment; preserved the previous x402 counters.",
+    };
+  }
 }
 
+function parseSats(body) {
+  const match = String(body || "").match(/([0-9][0-9,]*)\s*(?:sat|sats|satoshis)\b/i);
+  return match ? Number(match[1].replace(/,/g, "")) : null;
+}
+
+function parseBtcAddress(body) {
+  const match = String(body || "").match(/\bbc1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{20,90}\b/i);
+  return match ? match[0] : null;
+}
+
+function parseTxid(body) {
+  const match = String(body || "").match(/\b[0-9a-f]{64}\b/i);
+  return match ? match[0] : null;
+}
+
+function parsePrNumber(body) {
+  const text = String(body || "");
+  const urlMatch = text.match(/quantum-visualizer\/pull\/(\d+)/i);
+  if (urlMatch) return Number(urlMatch[1]);
+  const prMatch = text.match(/\bPR\s*#(\d+)\b/i);
+  return prMatch ? Number(prMatch[1]) : null;
+}
+
+function inferPayoutState(body) {
+  const text = String(body || "").toLowerCase();
+  const negative = /not paid|no paid|no received transaction|pending|awaiting|zero transactions/.test(text);
+  if (!negative && /paid on-chain|payment sent|payout sent|txid|transaction id|on-chain proof/.test(text)) return "paid";
+  if (/(payment|payout) request ack/.test(text)) return "acked";
+  if (/payout request|payment request|requesting\s+\*{0,2}[0-9,]+\s*sats|payout route/.test(text)) return "requested";
+  return "tracked";
+}
+
+function makePayoutLedger({ comments, prsRaw }) {
+  const prsByNumber = new Map(prsRaw.map((p) => [Number(p.number), p]));
+  const rows = [];
+  for (const comment of comments) {
+    const body = comment.body || "";
+    const isPaymentComment = /(payout|payment)\s+(request|route|acked|sent|paid)|requesting\s+\*{0,2}[0-9,]+\s*sats|paid on-chain/i.test(body);
+    if (!isPaymentComment) continue;
+    if (!/(sats|bc1|quantum-visualizer\/pull|PR\s*#|txid)/i.test(body)) continue;
+    const prNumber = parsePrNumber(body);
+    const pr = prNumber ? prsByNumber.get(prNumber) : null;
+    const amountSats = parseSats(body);
+    const state = inferPayoutState(body);
+    rows.push({
+      author: comment.user?.login || "unknown",
+      created_at: comment.created_at,
+      comment_url: comment.html_url,
+      pr: prNumber ? `#${prNumber}` : null,
+      pr_state: pr?.state || "unknown",
+      amount_sats: amountSats,
+      btc_address: parseBtcAddress(body),
+      txid: parseTxid(body),
+      state,
+      note: state === "paid"
+        ? "Payment proof detected in issue #33 comment."
+        : "Not counted as paid until bounty-poster approval and on-chain/payment proof are visible.",
+    });
+  }
+
+  const requestedRows = rows.filter((r) => r.amount_sats && r.state !== "paid");
+  const paidRows = rows.filter((r) => r.amount_sats && r.state === "paid");
+  return {
+    source_url: "https://github.com/1btc-news/news-client/issues/33",
+    extracted_at: new Date().toISOString(),
+    rows,
+    requested_sats: requestedRows.reduce((sum, r) => sum + r.amount_sats, 0),
+    confirmed_paid_sats: paidRows.reduce((sum, r) => sum + r.amount_sats, 0),
+    pending_requests: rows.filter((r) => r.state !== "paid").length,
+    paid_requests: rows.filter((r) => r.state === "paid").length,
+    verifier: "Issue #33 comments plus on-chain BTC transaction proof for each address/txid.",
+  };
+}
+
+const existingCustomer = readExistingCustomer();
 const signalsRes = await fetchJSON("https://aibtc.news/api/signals?limit=500");
 const allSignals = signalsRes.signals || signalsRes;
 const quantum = allSignals.filter((s) => (s.beatSlug || "").includes("quantum"));
@@ -61,12 +172,11 @@ const prsRaw = JSON.parse(
 const merged = prsRaw.filter((p) => p.state === "MERGED");
 const pr_contributors = [...new Set(merged.map((p) => p.author.login))];
 
-const ledger = await fetchRevenueLedger();
-const revenueSats = ledger.reduce((sum, e) => sum + (e.sats || 0), 0);
-const eventsLast7d = ledger.filter((e) => (e.ts || "").slice(0, 10) >= sevenDaysAgo);
+const revenue = await fetchRevenueLedger(existingCustomer);
+const payoutLedger = makePayoutLedger({ comments, prsRaw });
 
 const customer = {
-  schema_version: 2,
+  schema_version: 3,
   as_of: today,
   quantum_beats: {
     total: quantum.length,
@@ -81,11 +191,12 @@ const customer = {
       note: "Original research bounty (Issue #30), on-chain proof",
     },
     bounty_33_pool_sats: 250000,
-    bounty_33_paid_confirmed: "unknown — awaiting on-chain payout ledger in #33",
-    revenue_x402_sats: revenueSats,
-    revenue_x402_events: ledger.length,
-    revenue_x402_last_7d_events: eventsLast7d.length,
-    revenue_x402_recent: ledger.slice(-5),
+    bounty_33_paid_confirmed: payoutLedger.confirmed_paid_sats,
+    bounty_33_payout_ledger: payoutLedger,
+    revenue_x402_sats: revenue.totalSats,
+    revenue_x402_events: revenue.totalEvents,
+    revenue_x402_last_7d_events: revenue.last7dEvents,
+    revenue_x402_recent: revenue.events.slice(-5),
     inscription_sales_sats: 0,
   },
   narrative_traction: {
@@ -101,14 +212,16 @@ const customer = {
   freshness: {
     signals_fetched_at: new Date().toISOString(),
     github_fetched_at: new Date().toISOString(),
-    revenue_kv_fetched_at: new Date().toISOString(),
+    revenue_kv_fetched_at: revenue.fetchedAt,
     next_refresh_target: "weekly synthesis (Sundays)",
   },
   notes: [
     "Silence is not a data point. Unknown fields stay unknown until verified.",
     "Regenerate with: node scripts/build-customer.mjs",
+    "bounty_33_payout_ledger is parsed from issue #33 comments. Pending requests are not counted as paid.",
+    ...(revenue.note ? [revenue.note] : []),
   ],
 };
 
 fs.writeFileSync(OUT, JSON.stringify(customer, null, 2) + "\n");
-console.log(`wrote customer.json: ${quantum.length} beats, ${comments.length} comments, ${merged.length} merged PRs, ${ledger.length} x402 events (${revenueSats} sats)`);
+console.log(`wrote customer.json: ${quantum.length} beats, ${comments.length} comments, ${merged.length} merged PRs, ${revenue.totalEvents} x402 events (${revenue.totalSats} sats), ${payoutLedger.rows.length} payout rows`);
